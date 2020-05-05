@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Threading;
@@ -29,8 +29,6 @@ namespace KingsGame
 		SpriteFont font;
 		int[] key = new int[] { 0, 0, 0, 0, 0, 0};
 		int[] _key = new int[] { 0, 0, 0, 0, 0, 0};
-		ushort[] map;
-		byte[,] textmap;
 		static byte width;
 		static byte height;
 		static int TexSi;
@@ -44,8 +42,8 @@ namespace KingsGame
 			public byte height;
 			public string[] _textures;
 			public Texture2D[] textures;
-			public lay[] layers;
-			public struct lay
+			public dec[] decoration;
+			public struct dec
 			{
 				public ushort[] t;
 				public byte[,] d;
@@ -93,15 +91,15 @@ namespace KingsGame
 				}
 				if (c.ReadInt32() != 4) throw err;
 				if (c.ReadInt32() != d) throw err;
-				layers = new lay[d];
+				decoration = new dec[d];
 				for (var _a = 0; _a < d; _a++)
 				{
 					var _b = c.ReadInt32();
-					layers[_a] = new lay() { d = new byte[_b, 2], t = new ushort[_b] };
+					decoration[_a] = new dec() { d = new byte[_b, 2], t = new ushort[_b] };
 					for(var _c = 0; _c < _b; _c++)
 					{
-						layers[_a].t[_c] = c.ReadUInt16();
-						for(var _d = 0; _d < 2; _d++) layers[_a].d[_c, _d] = c.ReadByte();
+						decoration[_a].t[_c] = c.ReadUInt16();
+						for(var _d = 0; _d < 2; _d++) decoration[_a].d[_c, _d] = c.ReadByte();
 					}
 					if (c.ReadUInt16() != _a) throw err;
 				}
@@ -141,15 +139,15 @@ namespace KingsGame
 					b.Write((ushort)_a);
 				}
 				b.Write(4);
-				b.Write(c = layers.GetLength(0));
+				b.Write(c = decoration.GetLength(0));
 				for (var _a = 0; _a < c; _a++)
 				{
-					var _c = layers[_a].t.GetLength(0);
+					var _c = decoration[_a].t.GetLength(0);
 					b.Write(_c);
 					for (var _b = 0; _b < _c; _b++)
 					{
-						b.Write(layers[_a].t[_b]);
-						for (var _d = 0; _d < 2; _d++) b.Write(layers[_a].d[_b, _d]);
+						b.Write(decoration[_a].t[_b]);
+						for (var _d = 0; _d < 2; _d++) b.Write(decoration[_a].d[_b, _d]);
 					}
 					b.Write((ushort)_a);
 				}
@@ -172,11 +170,11 @@ namespace KingsGame
 					var _b = maps[a, _a];
 					sprite.Draw(textures[tmap[_b, 0]], new Rectangle(x * b + tmap[_b, 4] * TexSc, y * b + tmap[_b, 5] * TexSc, size[tmap[_b, 3], 0] * TexSc, size[tmap[_b, 3], 1] * TexSc), new Rectangle(tmap[_b, 1] * size[tmap[_b, 3], 0], tmap[_b, 2] * size[tmap[_b, 3], 1], size[tmap[_b, 3], 0], size[tmap[_b, 3], 1]), Color.White);
 				}
-				for (var _a=0; _a < layers[a].t.Length; _a++) {
-					var _c = layers[a];
+				for (var _a=0; _a < decoration[a].t.Length; _a++) {
+					var _c = decoration[a];
 					var _b = new byte[2] { size[tmap[_c.t[_a], 3], 0], size[tmap[_c.t[_a], 3], 1] };
 					sprite.Draw(textures[tmap[_c.t[_a], 0]], new Rectangle(_c.d[_a, 0] * b + tmap[_c.t[_a], 4] * TexSc, _c.d[_a, 1] * b + tmap[_c.t[_a], 5] * TexSc, _b[0] * TexSc, _b[1] * TexSc),
-						new Rectangle(tmap[_c.t[_a], 1] * _b[0], tmap[_c.t[_a], 2] * _b[1], _b[0], _b[1]), Color.White);
+						new Rectangle(tmap[_c.t[_a], 1] * TexSi/*_b[0]*/, tmap[_c.t[_a], 2] * TexSi/*_b[1]*/, _b[0], _b[1]), Color.White);
 				}
 			}
 		}
