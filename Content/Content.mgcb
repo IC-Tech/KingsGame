@@ -20,6 +20,18 @@
 /processorParam:TextureFormat=Compressed
 /build:font.spritefont;font
 
+#begin Idle (78x58).png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Idle (78x58)_1.png;king
+
 #begin Idle.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -42,5 +54,5 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Terrain (32x32).png;Wall
+/build:Terrain (32x32).png;wall
 
