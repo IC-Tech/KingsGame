@@ -32,18 +32,6 @@
 /processorParam:TextureFormat=Compressed
 /build:font.spritefont;font
 
-#begin Idle (78x58)_1.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Idle (78x58)_1.png;king
-
 #begin Idle.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -56,7 +44,7 @@
 /processorParam:TextureFormat=Color
 /build:Idle.png;door
 
-#begin Run (78x58).png
+#begin king_optimized.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -66,7 +54,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Run (78x58)_1.png;run
+/build:king_optimized.png;king_all
 
 #begin Terrain (32x32).png
 /importer:TextureImporter
