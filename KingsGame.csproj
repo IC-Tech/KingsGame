@@ -54,6 +54,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\Game-File.txt" />
     <Content Include="Icon.ico" />
   </ItemGroup>
   <ItemGroup>
