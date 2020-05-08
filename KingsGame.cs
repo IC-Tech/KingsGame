@@ -4,14 +4,13 @@ using Microsoft.Xna.Framework.Input;
 using System.Threading;
 using System.IO;
 
-//assets
-//https://pixel-frog.itch.io/kings-and-pigs
+//  
+//  assets
+//  https://pixel-frog.itch.io/kings-and-pigs
+//  
 
 namespace KingsGame
 {
-	/// <summary>
-	/// This is the main type for your game.
-	/// </summary>
 	public class KingsGame : Game
 	{
 		GraphicsDeviceManager graphics;
@@ -213,80 +212,6 @@ namespace KingsGame
 			height = 6;
 			player = new Player();
 			content = new IContent("game.idata");
-			/*
-			var _a = content.tmap;
-			var _b = 109;//_a.GetLength(0);
-			var SIZE = 8 * 5 + 3;
-			content._textures = new string[] { "wall", "door", "decorate", "king_all" };
-			var _d = new byte[_b + SIZE, 6];
-			for (var _c = 0; _c < _b; _c++)
-			{
-				_a[_c, 4] += (byte)120;
-				_a[_c, 5] += (byte)120;
-				for (var _e = 0; _e < 6; _e++)
-					{
-						_d[_c, _e] = _a[_c, _e];
-					}
-			}
-			_a = new byte[SIZE, 6];
-			var _f = _b;
-			_b = 0;
-			for (var _c = 0; _c < 3; _c++)
-				for (var _e = 0; _e < 8; _e++)
-				{
-					_a[_b, 0] = 3;
-					_a[_b, 1] = (byte)(1 + _e * 2);
-					_a[_b, 2] = (byte)(_c + 1);
-					_a[_b, 3] = 2;
-					_a[_b, 4] = 120;
-					_a[_b++, 5] = 122;
-				}
-			for (var _c = 0; _c < 1; _c++)
-				for (var _e = 0; _e < 3; _e++)
-				{
-					_a[_b, 0] = 3;
-					_a[_b, 1] = (byte)(1 + _e * 2);
-					_a[_b, 2] = (byte)(_c * 2 + 4);
-					_a[_b, 3] = 3;
-					_a[_b, 4] = 120;
-					_a[_b++, 5] = 106;
-				}
-			for (var _c = 0; _c < 2; _c++)
-				for (var _e = 0; _e < 8; _e++)
-				{
-					_a[_b, 0] = 3;
-					_a[_b, 1] = (byte)(1 + _e * 2);
-					_a[_b, 2] = (byte)(_c * 2 + 6);
-					_a[_b, 3] = 3;
-					_a[_b, 4] = 120;
-					_a[_b++, 5] = 92;
-				}
-			_b = _a.GetLength(0);
-			for (var _c = 0; _c < _b; _c++) for (var _e = 0; _e < 6; _e++) _d[_c + _f, _e] = _a[_c, _e];
-			content.tmap = _d;
-			content.save("game.idata");//*/
-			/*
-			var _a = content.size;
-			var _b = _a.GetLength(0);
-			var _d = new byte[_b + 1, 2];
-			for (var _c = 0; _c < _b; _c++)
-				for (var _e = 0; _e < 2; _e++) _d[_c, _e] = _a[_c, _e];
-			_d[_b, 0] = 64;
-			_d[_b, 1] = 64;
-			content.size = _d;
-			content.save("game.idata");
-			//*/
-			/*
-			content.decoration[0] = new IContent.dec() {
-				d = new byte[,] {
-					{ 1, 2 }, { 10, 1 }, { 10, 2 }, { 10, 3 }, { 3, 1 }
-				},
-				t = new ushort[] {
-					94, 95, 100, 105, 108
-				}
-			};
-			//content.save("game.idata");//*/
-			//content.save("../../../../game.idata");
 		}
 		static void writeData(string b, byte[] a, int d = -1)
 		{
