@@ -73,10 +73,10 @@ namespace KingsGame
 				}
 				if (c.ReadInt32() != 2) throw err;
 				d = c.ReadInt32();
-				tmap = new byte[d, 6];
+				tmap = new byte[d, 8];
 				for (var _a = 0; _a < d; _a++)
 				{
-					for (var _b = 0; _b < 6; _b++)
+					for (var _b = 0; _b < 8; _b++)
 					{
 						tmap[_a, _b] = c.ReadByte();
 					}
@@ -133,7 +133,7 @@ namespace KingsGame
 				}
 				b.Write(2);
 				b.Write(c = tmap.GetLength(0));
-				for (var _a = 0; _a < c; _a++) for (var _b = 0; _b < 6; _b++) b.Write(tmap[_a, _b]);
+				for (var _a = 0; _a < c; _a++) for (var _b = 0; _b < 8; _b++) b.Write(tmap[_a, _b]);
 				b.Write(3);
 				b.Write(width);
 				b.Write(height);
@@ -171,7 +171,10 @@ namespace KingsGame
 				var a = scale * TexSi;
 				var b = new byte[] { size[tmap[t, 3], 0], size[tmap[t, 3], 1] };
 				sprite.Draw(textures[tmap[t, 0]],
-					new Rectangle((manual ? x * scale : (x * a)) + (((int)tmap[t, 4] - 120) * scale), (manual ? y * scale : (y * a)) + (((int)tmap[t, 5] - 120) * scale), b[0] * scale, b[1] * scale),
+					new Rectangle(
+						(manual ? x * scale : (x * a)) + ((tmap[t, 4] - 120) * scale) + ((effects == SpriteEffects.FlipHorizontally ? tmap[t, 6] - 120 : 0) * scale),
+						(manual ? y * scale : (y * a)) + ((tmap[t, 5] - 120) * scale) + ((effects == SpriteEffects.FlipHorizontally ? tmap[t, 7] - 120 : 0) * scale), 
+						b[0] * scale, b[1] * scale),
 					new Rectangle(tmap[t, 1] * TexSi, tmap[t, 2] * TexSi, b[0], b[1]),
 					Color.White, 0, Vector2.One, effects, 0);
 			}

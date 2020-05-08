@@ -35,6 +35,8 @@ Size
     1 byte SizeID
     1 byte Padding X
     1 byte Padding Y
+    1 byte FlipHorizontally Padding X
+    1 byte FlipHorizontally Padding Y
 04 bytes SectionID
 01 bytes Map Width
 01 bytes Map Height
