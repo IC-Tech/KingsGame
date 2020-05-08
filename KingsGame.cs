@@ -16,31 +16,26 @@ namespace KingsGame
 	{
 		GraphicsDeviceManager graphics;
 		SpriteBatch sprite;
-		Texture2D wall;
-		IContent content;
+		static IContent content;
 
 		int[] fps = new int[] { 0, 0 };
 		ulong _fps_f = 0;
 		Thread fpsc;
 
-		Texture2D select;
-		Vector2 selectPos = new Vector2(0, 0);
-		Array selArr = new Array();
-
-		float speed = 800F;
+		static float speed = 800F;
 
 		SpriteFont font;
-		int[] key = new int[] { 0, 0, 0, 0, 0, 0};
-		int[] _key = new int[] { 0, 0, 0, 0, 0, 0};
+		static int[] key = new int[] { 0, 0, 0, 0, 0, 0 };
+		static int[] _key = new int[] { 0, 0, 0, 0, 0, 0 };
 
-		float PlayerPos = 0;
-		int PlayerView = 1;
+		Player player;
 
 		static byte width;
 		static byte height;
-		static int TexSi;
-		static int TexSc;
-		class IContent
+		static int TexSi = 32;
+		static int scale = 3;
+		static int currMap = 0;
+		class IContent : System.IDisposable
 		{
 			public byte[,] size;
 			public byte[,] tmap;
@@ -61,17 +56,19 @@ namespace KingsGame
 				var b = new MemoryStream(readData(a));
 				var c = new BinaryReader(b);
 				c.ReadString();
-				if(c.ReadInt32() != 0) throw err;
+				if (c.ReadInt32() != 0) throw err;
 				var d = c.ReadInt32();
 				_textures = new string[d];
-				for (var _a = 0; _a < d; _a++) {
+				for (var _a = 0; _a < d; _a++)
+				{
 					_textures[_a] = c.ReadString();
 					if (c.ReadUInt16() != _a) throw err;
 				}
 				if (c.ReadInt32() != 1) throw err;
 				d = c.ReadInt32();
 				size = new byte[d, 2];
-				for (var _a = 0; _a < d; _a++) {
+				for (var _a = 0; _a < d; _a++)
+				{
 					size[_a, 0] = c.ReadByte();
 					size[_a, 1] = c.ReadByte();
 				}
@@ -90,9 +87,10 @@ namespace KingsGame
 				height = c.ReadByte();
 				d = c.ReadInt32();
 				maps = new ushort[d, width * height];
-				for (var _a = 0; _a < d; _a++) {
+				for (var _a = 0; _a < d; _a++)
+				{
 					var _b = width * height;
-					for(var _c =0; _c < _b; _c++) maps[_a, _c] = c.ReadUInt16();
+					for (var _c = 0; _c < _b; _c++) maps[_a, _c] = c.ReadUInt16();
 					if (c.ReadUInt16() != _a) throw err;
 				}
 				if (c.ReadInt32() != 4) throw err;
@@ -102,10 +100,10 @@ namespace KingsGame
 				{
 					var _b = c.ReadInt32();
 					decoration[_a] = new dec() { d = new byte[_b, 2], t = new ushort[_b] };
-					for(var _c = 0; _c < _b; _c++)
+					for (var _c = 0; _c < _b; _c++)
 					{
 						decoration[_a].t[_c] = c.ReadUInt16();
-						for(var _d = 0; _d < 2; _d++) decoration[_a].d[_c, _d] = c.ReadByte();
+						for (var _d = 0; _d < 2; _d++) decoration[_a].d[_c, _d] = c.ReadByte();
 					}
 					if (c.ReadUInt16() != _a) throw err;
 				}
@@ -114,13 +112,15 @@ namespace KingsGame
 				b.Dispose();
 				System.GC.Collect();
 			}
-			public void save(string p) {
+			public void save(string p)
+			{
 				var a = new MemoryStream();
 				var b = new BinaryWriter(a);
 				b.Write("IC:IContent;");
 				b.Write(0);
 				b.Write(_textures.Length);
-				for (var _a = 0; _a < _textures.Length; _a++) {
+				for (var _a = 0; _a < _textures.Length; _a++)
+				{
 					b.Write(_textures[_a]);
 					b.Write((ushort)_a);
 				}
@@ -169,32 +169,124 @@ namespace KingsGame
 			}
 			public void _draw(SpriteBatch sprite, ushort x, ushort y, ushort t, bool manual = false, SpriteEffects effects = SpriteEffects.None)
 			{
-				var a = TexSc * TexSi;
+				var a = scale * TexSi;
 				var b = new byte[] { size[tmap[t, 3], 0], size[tmap[t, 3], 1] };
 				sprite.Draw(textures[tmap[t, 0]],
-					new Rectangle((manual ? x * TexSc : (x * a)) + tmap[t, 4] * TexSc, (manual ? y * TexSc : (y * a)) + tmap[t, 5] * TexSc, b[0] * TexSc, b[1] * TexSc), 
+					new Rectangle((manual ? x * scale : (x * a)) + (((int)tmap[t, 4] - 120) * scale), (manual ? y * scale : (y * a)) + (((int)tmap[t, 5] - 120) * scale), b[0] * scale, b[1] * scale),
 					new Rectangle(tmap[t, 1] * TexSi, tmap[t, 2] * TexSi, b[0], b[1]),
 					Color.White, 0, Vector2.One, effects, 0);
 			}
 			public void drawMap(SpriteBatch sprite, int a, SpriteFont font)
 			{
-				for (int _a = 0; _a < width * height; _a++) {
+				for (int _a = 0; _a < width * height; _a++)
+				{
 					int y = _a / width, x = _a - (y * width);
 					_draw(sprite, (ushort)x, (ushort)y, maps[a, _a]);
 				}
-				for (var _a=0; _a < decoration[a].t.Length; _a++) _draw(sprite, decoration[a].d[_a, 0], decoration[a].d[_a, 1], decoration[a].t[_a]);
+				for (var _a = 0; _a < decoration[a].t.Length; _a++) _draw(sprite, decoration[a].d[_a, 0], decoration[a].d[_a, 1], decoration[a].t[_a]);
 			}
+			#region IDisposable Support
+			private bool disposedValue = false; // To detect redundant calls
+
+			protected virtual void Dispose(bool disposing)
+			{
+				if (disposedValue) return;
+				disposedValue = true;
+				for (var _a = 0; _a < textures.Length; _a++) textures[_a].Dispose();
+				if (!disposing) return;
+				size = null;
+				tmap = null;
+				maps = null;
+				width = 0;
+				height = 0;
+				_textures = null;
+				decoration = null;
+			}
+			public void Dispose() => Dispose(true);
+			#endregion
 		}
-		static Rectangle Tex(int a, int b) => new Rectangle(a * TexSi, b * TexSi, TexSi, TexSi);
 		public KingsGame()
 		{
 			graphics = new GraphicsDeviceManager(this);
 			Content.RootDirectory = "Content";
 			width = 12;
 			height = 6;
-			TexSi = 32;
-			TexSc = 3;
+			player = new Player();
 			content = new IContent("game.idata");
+			/*
+			var _a = content.tmap;
+			var _b = 109;//_a.GetLength(0);
+			var SIZE = 8 * 5 + 3;
+			content._textures = new string[] { "wall", "door", "decorate", "king_all" };
+			var _d = new byte[_b + SIZE, 6];
+			for (var _c = 0; _c < _b; _c++)
+			{
+				_a[_c, 4] += (byte)120;
+				_a[_c, 5] += (byte)120;
+				for (var _e = 0; _e < 6; _e++)
+					{
+						_d[_c, _e] = _a[_c, _e];
+					}
+			}
+			_a = new byte[SIZE, 6];
+			var _f = _b;
+			_b = 0;
+			for (var _c = 0; _c < 3; _c++)
+				for (var _e = 0; _e < 8; _e++)
+				{
+					_a[_b, 0] = 3;
+					_a[_b, 1] = (byte)(1 + _e * 2);
+					_a[_b, 2] = (byte)(_c + 1);
+					_a[_b, 3] = 2;
+					_a[_b, 4] = 120;
+					_a[_b++, 5] = 122;
+				}
+			for (var _c = 0; _c < 1; _c++)
+				for (var _e = 0; _e < 3; _e++)
+				{
+					_a[_b, 0] = 3;
+					_a[_b, 1] = (byte)(1 + _e * 2);
+					_a[_b, 2] = (byte)(_c * 2 + 4);
+					_a[_b, 3] = 3;
+					_a[_b, 4] = 120;
+					_a[_b++, 5] = 106;
+				}
+			for (var _c = 0; _c < 2; _c++)
+				for (var _e = 0; _e < 8; _e++)
+				{
+					_a[_b, 0] = 3;
+					_a[_b, 1] = (byte)(1 + _e * 2);
+					_a[_b, 2] = (byte)(_c * 2 + 6);
+					_a[_b, 3] = 3;
+					_a[_b, 4] = 120;
+					_a[_b++, 5] = 92;
+				}
+			_b = _a.GetLength(0);
+			for (var _c = 0; _c < _b; _c++) for (var _e = 0; _e < 6; _e++) _d[_c + _f, _e] = _a[_c, _e];
+			content.tmap = _d;
+			content.save("game.idata");//*/
+			/*
+			var _a = content.size;
+			var _b = _a.GetLength(0);
+			var _d = new byte[_b + 1, 2];
+			for (var _c = 0; _c < _b; _c++)
+				for (var _e = 0; _e < 2; _e++) _d[_c, _e] = _a[_c, _e];
+			_d[_b, 0] = 64;
+			_d[_b, 1] = 64;
+			content.size = _d;
+			content.save("game.idata");
+			//*/
+			/*
+			content.decoration[0] = new IContent.dec() {
+				d = new byte[,] {
+					{ 1, 2 }, { 10, 1 }, { 10, 2 }, { 10, 3 }, { 3, 1 }
+				},
+				t = new ushort[] {
+					94, 95, 100, 105, 108
+				}
+			};
+			//content.save("game.idata");//*/
+			//content.save("../../../../game.idata");
 		}
 		static void writeData(string b, byte[] a, int d = -1)
 		{
@@ -206,34 +298,32 @@ namespace KingsGame
 			f.Write(new byte[] { (byte)c, (byte)(c >> 8), (byte)(c >> 16), (byte)(c >> 24) }, 0, 4);
 			f.Dispose();
 		}
-		static byte[] readData(string a) {
+		static byte[] readData(string a)
+		{
 			var b = File.ReadAllBytes(a);
 			uint c = 0;
 			var e = new byte[b.Length - 4];
-			for(var _a=0; _a<b.Length -4; _a++) c += ((c << 2) - (e[_a] = b[_a]));
+			for (var _a = 0; _a < b.Length - 4; _a++) c += ((c << 2) - (e[_a] = b[_a]));
 			if ((uint)(b[b.Length - 1] << 24 | b[b.Length - 2] << 16 | b[b.Length - 3] << 8 | b[b.Length - 4]) != c) throw new System.Exception("File Damaged");
 			return e;
 		}
 		protected override void Initialize()
 		{
-			graphics.PreferredBackBufferWidth = TexSc * TexSi * width;
-			graphics.PreferredBackBufferHeight = TexSc * TexSi * height;
+			graphics.PreferredBackBufferWidth = scale * TexSi * width;
+			graphics.PreferredBackBufferHeight = scale * TexSi * height;
 			graphics.ApplyChanges();
+			player.init();
 			base.Initialize();
 		}
 		protected override void LoadContent()
 		{
 			sprite = new SpriteBatch(GraphicsDevice);
 			content.load(Content);
-			wall = Content.Load<Texture2D>("wall");
 			font = Content.Load<SpriteFont>("font");
-			select = new Texture2D(GraphicsDevice, TexSi * TexSc, TexSi * TexSc);
-			Color[] d = new Color[TexSi * TexSi * TexSc * TexSc];
-			for (var _a = 0; _a < TexSi * TexSi * TexSc * TexSc; _a++) d[_a] = new Color(0, 0, 0, 100);
-			select.SetData(d);
 			fpsc = new Thread(new ThreadStart(() =>
 			{
-				while (true) {
+				while (true)
+				{
 					Thread.Sleep(1000);
 					fps[0] = fps[1];
 					fps[1] = 0;
@@ -244,7 +334,7 @@ namespace KingsGame
 		protected override void UnloadContent()
 		{
 			sprite.Dispose();
-			wall.Dispose();
+			content.Dispose();
 			fpsc.Abort();
 			base.UnloadContent();
 		}
@@ -258,15 +348,15 @@ namespace KingsGame
 			key[3] = kstate.IsKeyDown(Keys.Left) || kstate.IsKeyDown(Keys.A) == true ? 1 : 0;
 			key[4] = kstate.IsKeyDown(Keys.Right) || kstate.IsKeyDown(Keys.D) == true ? 1 : 0;
 			key[5] = kstate.IsKeyDown(Keys.Space) == true ? 1 : 0;
-			for (var _a=0; _a<key.Length; _a++)
+			for (var _a = 0; _a < key.Length; _a++)
 			{
-				if(key[_a] != _key[_a] && key[_a] == 1) {
+				if (key[_a] != _key[_a] && key[_a] == 1)
+				{
 					if (_a == 0) graphics.ToggleFullScreen();
 				}
-				if (_a == 3 && key[_a] == 1) PlayerPos -= (float)(0.04 * gameTime.ElapsedGameTime.TotalMilliseconds * (1000 / speed));
-				if (_a == 4 && key[_a] == 1) PlayerPos += (float)(0.04 * gameTime.ElapsedGameTime.TotalMilliseconds * (1000 / speed));
 				_key[_a] = key[_a];
 			}
+			player.update(gameTime);
 			base.Update(gameTime);
 		}
 		class Array
@@ -279,7 +369,8 @@ namespace KingsGame
 				len = 0;
 				data = new object[sp];
 			}
-			object[] resize(object[] d, int a, int b) {
+			object[] resize(object[] d, int a, int b)
+			{
 				object[] _a = new object[a];
 				for (int _b = 0; _b < b; _b++) _a[_b] = d[_b];
 				return _a;
@@ -293,6 +384,204 @@ namespace KingsGame
 			public void set(int b, object a) => data[b] = a;
 			public object[] get() => resize(data, len, len);
 		}
+		class Player
+		{
+			public ushort[] Idle = new ushort[] { 117, 118, 119, 120, 121, 122, 123 };
+			public ushort[] Run = new ushort[] { 109, 110, 111, 112, 113, 114, 115, 116 };
+			public ushort[] Attack = new ushort[] { 109, 132, 133, 134, 109 };
+			public ushort[] Dead = new ushort[] { 128, 129, 130, 131 };
+			public ushort[] WalkOut = new ushort[] { 144, 145, 146, 147, 148, 149, 150, 151 };
+			public ushort[] WalkIn = new ushort[] { 136, 137, 138, 139, 140, 141, 142, 143 };
+			public ushort[] Fall = new ushort[] { 124 };
+			public ushort[] Jump = new ushort[] { 132 };
+			public ushort[] Hit = new ushort[] { 126, 127 };
+			public ushort[] Ground = new ushort[] { 125 };
+			public ushort positionX;
+			public ushort positionY;
+			public float posX;
+			public float posY;
+			//public float desX;
+			public float desY;
+			public int state = 0;
+			public int _state = -1;
+			public byte view = 0;
+			public byte inputBlock = 0;
+			public float blockRev = 0;
+			public const double MSpeed = 0.04;
+			public double start;
+			public bool allowFall = true;
+			public sbyte aniJump = -1;
+			public ushort playerWidth = 38;
+			public Player()
+			{
+				positionX = 3;
+				positionY = 4;
+				posX = positionX * TexSi;
+				posY = positionY * TexSi;
+				view = 1;
+			}
+			public void init()
+			{
+			}
+			public void update(GameTime t)
+			{
+				positionX = (ushort)(posX / TexSi);
+				positionY = (ushort)(posY / TexSi);
+				if (state == 5 && blockRev > 0)
+				{
+					blockRev -= (float)t.ElapsedGameTime.TotalMilliseconds;
+					if (blockRev <= 0)
+					{
+						state = 0;
+						inputBlock = 0;
+						aniJump = -1;
+					}
+					return;
+				}
+				if ((inputBlock & 1) == 0)
+				{
+					var _a = blockR(positionX, positionY);
+					_a[0] = (ushort)(++_a[0] * TexSi);
+					_a[1] = (ushort)(_a[1] * TexSi - playerWidth);
+					if ((key[3] == 1 || key[4] == 1) && key[4] != view) view = (byte)key[4];
+					if (state == 0 || state == 1) state = key[3] == 1 || key[4] == 1 ? 1 : 0;
+					if (key[3] == 1)
+					{
+						posX -= (float)(MSpeed * t.ElapsedGameTime.TotalMilliseconds * (1000 / speed));
+						if (posX < _a[0]) posX = _a[0];
+					}
+					if (key[4] == 1)
+					{
+						posX += (float)(MSpeed * t.ElapsedGameTime.TotalMilliseconds * (1000 / speed));
+						if (posX > _a[1]) posX = _a[1];
+					}
+				}
+				if ((inputBlock & 2) == 0)
+				{
+					if (key[1] == 1 || key[2] == 1)
+					{
+						state = key[1] == 1 ? 3 : 4;
+						inputBlock |= 2;
+						blockRev = speed;
+						if (key[1] == 1)
+						{
+							var _a = 1.4f;
+							if (positionY - 1 >= 0 && content.maps[currMap, _map(positionX, (ushort)(positionY - 1))] <= 47) _a -= 0.4f;
+							desY = ((float)positionY - _a) * TexSi;
+							allowFall = false;
+							aniJump = (sbyte)(positionY);
+						}
+					}
+				}
+				if ((inputBlock & 4) == 0)
+				{
+					if (key[5] == 1)
+					{
+						inputBlock = (byte)(inputBlock | 4);
+						blockRev = speed;
+						state = 2;
+					}
+				}
+				if (inputBlock != 0 && blockRev > 0)
+				{
+					blockRev -= (float)t.ElapsedGameTime.TotalMilliseconds;
+					if (blockRev <= 0)
+					{
+						//inputBlock = 0;
+						//state = 0;
+						blockRev = 0;
+						allowFall = true;
+						if (state == 2)
+						{
+							inputBlock = (byte)(inputBlock & 0xFB);
+							state = 0;
+						}
+					}
+					if (state == 3)
+					{
+						if (posY > desY) posY -= (float)(MSpeed * t.ElapsedGameTime.TotalMilliseconds * 5);
+						if (posY <= desY)
+						{
+							allowFall = true;
+							posY = desY;
+						}
+					}
+				}
+				if (allowFall)
+				{
+					ushort drop = _block((ushort)(aniJump > 0 ? aniJump : (posY / TexSi + 1)), positionX);
+					ushort _drop = _block((ushort)(aniJump > 0 ? aniJump : (posY / TexSi + 1)), (ushort)(positionX + 1));
+					if (_drop < drop) drop = _drop;
+					var _a = (int)(drop * TexSi - posY);
+					if (_a != 0)
+					{
+						var __a = (float)(MSpeed / 4 * 5 * t.ElapsedGameTime.TotalMilliseconds);
+						posY += __a < _a ? __a : _a;
+						state = (int)(drop * TexSi - posY) > 0 ? 4 : 5;
+						if (state == 5) posY = drop * TexSi;
+						blockRev = speed / 4;
+					}
+				}
+			}
+			public ushort _block(ushort a, ushort b)
+			{
+				while (a <= height)
+				{
+					var __a = content.maps[currMap, _map(b, a++)];
+					if (__a < 47) break;
+				}
+				return (ushort)(a - 2);
+			}
+			public ushort[] blockR(ushort b, ushort y)
+			{
+				var c = new ushort[] { 0, 0 };
+				for (var _a = b; _a >= 0; _a--)
+				{
+					if (content.maps[currMap, _map(_a, y)] < 47)
+					{
+						c[0] = _a;
+						break;
+					}
+				}
+				for (var _a = b; _a < width; _a++)
+				{
+					if (content.maps[currMap, _map(_a, y)] < 47)
+					{
+						c[1] = _a;
+						break;
+					}
+				}
+				return c;
+			}
+			public int _map(ushort x, ushort y) => y * width + x;
+			public void draw(GameTime t, SpriteBatch sprite, SpriteFont font)
+			{
+				ushort[] frames;
+				switch (state)
+				{
+					case 1: frames = Run; break;
+					case 2: frames = Attack; break;
+					case 3: frames = Jump; break;
+					case 4: frames = Fall; break;
+					case 5: frames = Ground; break;
+					case 6: frames = Hit; break;
+					case 7: frames = Dead; break;
+					case 8: frames = WalkOut; break;
+					case 9: frames = WalkIn; break;
+					default: frames = Idle; break;
+				}
+				if (_state != state)
+				{
+					start = t.TotalGameTime.TotalMilliseconds;
+					_state = state;
+				}
+				var _a = blockR(positionX, positionY);
+				content._draw(sprite, (ushort)posX, (ushort)posY,
+					frames[(int)(((t.TotalGameTime.TotalMilliseconds - start) / (speed / frames.Length)) % frames.Length)],
+					true, view == 1 ? SpriteEffects.None : SpriteEffects.FlipHorizontally);
+				sprite.DrawString(font, positionX + ", " + positionY + '\n' + content.maps[currMap, _map(positionX, positionY)].ToString() + "\n" + _a[0].ToString() + ", " + _a[1].ToString(), new Vector2(posX * scale, posY * scale), Color.Aqua);
+			}
+		}
 		protected override void Draw(GameTime gameTime)
 		{
 			string logs = "FPS: " + (1000 / (int)(gameTime.ElapsedGameTime.TotalMilliseconds < 1 ? 1000 : gameTime.ElapsedGameTime.TotalMilliseconds)).ToString() + ", " + fps[0];
@@ -302,11 +591,10 @@ namespace KingsGame
 			logs += "\nLT: " + System.DateTime.Now.ToLongTimeString();
 			graphics.GraphicsDevice.Clear(Color.WhiteSmoke);
 			sprite.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
-			content.drawMap(sprite, 0, font);
-			var anime = key[3] == 1 || key[4] == 1 ? new ushort[] { 116, 117, 118, 119, 120, 121, 122, 123 } : new ushort[] { 95, 95, 95, 95, 95, 96, 97, 98, 99, 100, 101 };
-			var a = (int)((gameTime.TotalGameTime.TotalMilliseconds / (speed / anime.Length)) % anime.Length);
-			logs += "\na: " + a; 
-			content._draw(sprite, (ushort)(32 + PlayerPos), (ushort)(3 * TexSi), anime[a], true, PlayerView == 1 ? SpriteEffects.None : SpriteEffects.FlipHorizontally);
+
+			content.drawMap(sprite, currMap, font);
+			player.draw(gameTime, sprite, font);
+
 			sprite.DrawString(font, logs, new Vector2(10, 10), Color.White);
 			sprite.End();
 			fps[1]++;
