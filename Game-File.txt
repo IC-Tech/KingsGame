@@ -5,8 +5,10 @@ Textures
     door
   Index 95-108
     decorate
-  Index 96-151
+  Index 109-151
     king_all
+  Index 152-155
+    door
 
 Size
   0 32x32
