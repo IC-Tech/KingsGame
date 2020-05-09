@@ -34,6 +34,19 @@ namespace KingsGame
 		static int TexSi = 32;
 		static int scale = 3;
 		static int currMap = 0;
+		class Animations
+		{
+			public static ushort[] Idle = new ushort[] { 117, 118, 119, 120, 121, 122, 123 };
+			public static ushort[] Run = new ushort[] { 109, 110, 111, 112, 113, 114, 115, 116 };
+			public static ushort[] Attack = new ushort[] { 109, 132, 133, 134, 109 };
+			public static ushort[] Dead = new ushort[] { 128, 129, 130, 131 };
+			public static ushort[] WalkOut = new ushort[] { 144, 145, 146, 147, 148, 149, 150, 151 };
+			public static ushort[] WalkIn = new ushort[] { 136, 137, 138, 139, 140, 141, 142, 143 };
+			public static ushort[] Fall = new ushort[] { 124 };
+			public static ushort[] Jump = new ushort[] { 132 };
+			public static ushort[] Hit = new ushort[] { 126, 127 };
+			public static ushort[] Ground = new ushort[] { 125 };
+		}
 		class IContent : System.IDisposable
 		{
 			public byte[,] size;
@@ -314,16 +327,6 @@ namespace KingsGame
 		}
 		class Player
 		{
-			public ushort[] Idle = new ushort[] { 117, 118, 119, 120, 121, 122, 123 };
-			public ushort[] Run = new ushort[] { 109, 110, 111, 112, 113, 114, 115, 116 };
-			public ushort[] Attack = new ushort[] { 109, 132, 133, 134, 109 };
-			public ushort[] Dead = new ushort[] { 128, 129, 130, 131 };
-			public ushort[] WalkOut = new ushort[] { 144, 145, 146, 147, 148, 149, 150, 151 };
-			public ushort[] WalkIn = new ushort[] { 136, 137, 138, 139, 140, 141, 142, 143 };
-			public ushort[] Fall = new ushort[] { 124 };
-			public ushort[] Jump = new ushort[] { 132 };
-			public ushort[] Hit = new ushort[] { 126, 127 };
-			public ushort[] Ground = new ushort[] { 125 };
 			public ushort positionX;
 			public ushort positionY;
 			public float posX;
@@ -487,16 +490,16 @@ namespace KingsGame
 				ushort[] frames;
 				switch (state)
 				{
-					case 1: frames = Run; break;
-					case 2: frames = Attack; break;
-					case 3: frames = Jump; break;
-					case 4: frames = Fall; break;
-					case 5: frames = Ground; break;
-					case 6: frames = Hit; break;
-					case 7: frames = Dead; break;
-					case 8: frames = WalkOut; break;
-					case 9: frames = WalkIn; break;
-					default: frames = Idle; break;
+					case 1: frames = Animations.Run; break;
+					case 2: frames = Animations.Attack; break;
+					case 3: frames = Animations.Jump; break;
+					case 4: frames = Animations.Fall; break;
+					case 5: frames = Animations.Ground; break;
+					case 6: frames = Animations.Hit; break;
+					case 7: frames = Animations.Dead; break;
+					case 8: frames = Animations.WalkOut; break;
+					case 9: frames = Animations.WalkIn; break;
+					default: frames = Animations.Idle; break;
 				}
 				if (_state != state)
 				{
