@@ -46,6 +46,8 @@ namespace KingsGame
 			public static ushort[] Jump = new ushort[] { 132 };
 			public static ushort[] Hit = new ushort[] { 126, 127 };
 			public static ushort[] Ground = new ushort[] { 125 };
+			public static ushort[] DoorOpen = new ushort[] { 94, 152, 153, 154, 155 };
+			public static ushort[] DoorClose = new ushort[] { 155, 154, 153, 152, 94 };
 		}
 		class IContent : System.IDisposable
 		{
@@ -342,7 +344,6 @@ namespace KingsGame
 			public double start;
 			public bool allowFall = true;
 			public sbyte aniJump = -1;
-			public ushort playerWidth = 38;
 			public Player()
 			{
 				positionX = 3;
@@ -373,7 +374,7 @@ namespace KingsGame
 				{
 					var _a = blockR(positionX, positionY);
 					_a[0] = (ushort)(++_a[0] * TexSi);
-					_a[1] = (ushort)(_a[1] * TexSi - playerWidth);
+					_a[1] = (ushort)(--_a[1] * TexSi/* - playerWidth*/);
 					if ((key[3] == 1 || key[4] == 1) && key[4] != view) view = (byte)key[4];
 					if (state == 0 || state == 1) state = key[3] == 1 || key[4] == 1 ? 1 : 0;
 					if (key[3] == 1)
@@ -442,7 +443,7 @@ namespace KingsGame
 				{
 					ushort drop = _block((ushort)(aniJump > 0 ? aniJump : (posY / TexSi + 1)), positionX);
 					ushort _drop = _block((ushort)(aniJump > 0 ? aniJump : (posY / TexSi + 1)), (ushort)(positionX + 1));
-					if (_drop < drop) drop = _drop;
+					if ((posX - (TexSi * (int)(posX / TexSi))) != 0 && _drop < drop) drop = _drop;
 					var _a = (int)(drop * TexSi - posY);
 					if (_a != 0)
 					{
