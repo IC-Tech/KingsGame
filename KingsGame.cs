@@ -36,6 +36,7 @@ namespace KingsGame
 
 		static int currMap = 0;
 		static map Map;
+		static Pig[] Pigs;
 
 		class Animations
 		{
@@ -51,6 +52,14 @@ namespace KingsGame
 			public static ushort[] Ground = new ushort[] { 125 };
 			public static ushort[] DoorOpen = new ushort[] { 94, 152, 153, 154, 155 };
 			public static ushort[] DoorClose = new ushort[] { 155, 154, 153, 152, 94 };
+			public static ushort[] PigsIdle = new ushort[] { 156, 156, 156, 156, 156, 156, 157, 158, 159, 160, 161 };
+			public static ushort[] PigsRun = new ushort[] { 162, 163, 164, 165, 166, 167 };
+			public static ushort[] PigsAttack = new ushort[] { 168, 169, 170, 171, 172 };
+			public static ushort[] PigsDead = new ushort[] { 173, 174, 175, 176 };
+			public static ushort[] PigsHit = new ushort[] { 177, 178 };
+			public static ushort[] PigsJump = new ushort[] { 179 };
+			public static ushort[] PigsFall = new ushort[] { 180 };
+			public static ushort[] PigsGround = new ushort[] { 181 };
 		}
 		public struct dec
 		{
@@ -254,6 +263,7 @@ namespace KingsGame
 			height = 6;
 			player = new Player();
 			content = new IContent("game.idata");
+			Pigs = new Pig[0];
 		}
 		static void writeData(string b, byte[] a, int d = -1)
 		{
@@ -274,13 +284,21 @@ namespace KingsGame
 			if ((uint)(b[b.Length - 1] << 24 | b[b.Length - 2] << 16 | b[b.Length - 3] << 8 | b[b.Length - 4]) != c) throw new System.Exception("File Damaged");
 			return e;
 		}
+		void loadMap(int a)
+		{
+			currMap = a;
+			Map = content.maps[a];
+			for (var _a = 0; _a < Pigs.Length; _a++) Pigs[_a].Dispose();
+			Pigs = new Pig[Map.pigs.GetLength(0)];
+			for (var _a = 0; _a < Pigs.Length; _a++) Pigs[_a] = new Pig(_a);
+			player.init(Map.start);
+		}
 		protected override void Initialize()
 		{
 			graphics.PreferredBackBufferWidth = scale * TexSi * width;
 			graphics.PreferredBackBufferHeight = scale * TexSi * height;
 			graphics.ApplyChanges();
-			Map = content.maps[currMap];
-			player.init();
+			loadMap(currMap = 0);
 			base.Initialize();
 		}
 		protected override void LoadContent()
@@ -325,8 +343,82 @@ namespace KingsGame
 				}
 				_key[_a] = key[_a];
 			}
+			for (var _a = 0; _a < Pigs.Length; _a++) Pigs[_a].update(gameTime);
 			player.update(gameTime);
 			base.Update(gameTime);
+		}
+		class Pig : System.IDisposable
+		{
+			float posX;
+			float posY;
+			byte type;
+			byte attri;
+			byte state;
+			byte _state;
+			double t;
+			bool view;
+			public Pig()
+			{
+				state = 0;
+				_state = 0xff;
+				t = 0;
+				view = true;
+			}
+			public Pig(byte[] a): this()
+			{
+				type = a[0];
+				posX = TexSi * a[1];
+				posY = TexSi * a[2];
+				attri = a[3];
+			}
+			public Pig(int a) : this()
+			{
+				type = Map.pigs[a ,0];
+				posX = TexSi * Map.pigs[a ,1];
+				posY = TexSi * Map.pigs[a ,2];
+				attri = Map.pigs[a ,3];
+			}
+			public void draw(GameTime t, SpriteBatch sprite, SpriteFont font)
+			{
+				ushort[] f;
+				switch(state)
+				{
+					case 1:		f = Animations.PigsRun;		break;
+					case 2:		f = Animations.PigsAttack;	break;
+					case 3:		f = Animations.PigsDead;	break;
+					case 4:		f = Animations.PigsHit;		break;
+					case 5:		f = Animations.PigsJump;	break;
+					case 6:		f = Animations.PigsFall;	break;
+					case 7:		f = Animations.PigsGround;	break;
+					default:	f = Animations.PigsIdle;	break;
+				}
+				if (_state != state)
+				{
+					this.t = t.TotalGameTime.TotalMilliseconds;
+					_state = state;
+				}
+				aniDraw(sprite, (ushort)posX, (ushort)posY, t.TotalGameTime.TotalMilliseconds - this.t, f, view);
+			}
+			public void update(GameTime t)
+			{
+
+			}
+
+			#region IDisposable Support
+			private bool disposedValue = false; // To detect redundant calls
+			protected virtual void Dispose(bool disposing)
+			{
+				if (!disposedValue)
+				{
+					if (disposing)
+					{
+						// TODO: dispose managed state (managed objects).
+					}
+					disposedValue = true;
+				}
+			}
+			public void Dispose() => Dispose(true);
+			#endregion
 		}
 		class Array
 		{
@@ -378,8 +470,10 @@ namespace KingsGame
 				posY = positionY * TexSi;
 				view = true;
 			}
-			public void init()
+			public void init(byte[] a)
 			{
+				posX = a[0] * TexSi;
+				posY = a[1] * TexSi;
 			}
 			public void update(GameTime t)
 			{
@@ -545,12 +639,11 @@ namespace KingsGame
 					_state = state;
 				}
 				var _a = blockR(positionX, positionY);
-				content._draw(sprite, (ushort)posX, (ushort)posY,
-					frames[(int)(((t.TotalGameTime.TotalMilliseconds - start) / (speed / frames.Length)) % frames.Length)],
-					true, view ? SpriteEffects.None : SpriteEffects.FlipHorizontally);
+				aniDraw(sprite, (ushort)posX, (ushort)posY, t.TotalGameTime.TotalMilliseconds - start, frames, view);
 				sprite.DrawString(font, positionX + ", " + positionY + '\n' + Map.back[_map(positionX, positionY)].ToString() + "\n" + _a[0].ToString() + ", " + _a[1].ToString(), new Vector2(posX * scale, posY * scale), Color.Aqua);
 			}
 		}
+		static void aniDraw(SpriteBatch s, ushort x, ushort y, double t, ushort[] f, bool h = false) => content._draw(s, x, y, f[(int)((t / (speed / f.Length)) % f.Length)], true, h ? SpriteEffects.None : SpriteEffects.FlipHorizontally);
 		protected override void Draw(GameTime gameTime)
 		{
 			string logs = "FPS: " + (1000 / (int)(gameTime.ElapsedGameTime.TotalMilliseconds < 1 ? 1000 : gameTime.ElapsedGameTime.TotalMilliseconds)).ToString() + ", " + fps[0];
@@ -562,6 +655,7 @@ namespace KingsGame
 			sprite.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
 
 			content.drawMap(sprite, font);
+			for (var _a = 0; _a < Pigs.Length; _a++) Pigs[_a].draw(gameTime, sprite, font);
 			player.draw(gameTime, sprite, font);
 
 			sprite.DrawString(font, logs, new Vector2(10, 10), Color.White);
