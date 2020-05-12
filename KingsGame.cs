@@ -27,7 +27,7 @@ namespace KingsGame
 		static bool[] key = new bool[7];
 		static bool[] _key = new bool[7];
 
-		Player player;
+		static Player player;
 
 		static byte width;
 		static byte height;
@@ -399,9 +399,24 @@ namespace KingsGame
 				}
 				aniDraw(sprite, (ushort)posX, (ushort)posY, t.TotalGameTime.TotalMilliseconds - this.t, f, view);
 			}
+			int _fa(int a) => a < 0 ? a * -1 : a;
 			public void update(GameTime t)
 			{
-
+				if((attri & 1) == 0) view = (posX - player.posX) > 0;
+				if((attri & 4) == 0)
+				{
+					var _a = player.blockR((ushort)(posX / TexSi), (ushort)(posY / TexSi));
+					_a[0] = (ushort)(++_a[0] * TexSi);
+					_a[1] = (ushort)(--_a[1] * TexSi);
+					state = (byte)(_fa((int)(posX - player.posX)) > TexSi && player.posX >= _a[0] && player.posX <= _a[1] ? 1 : 0);
+					if (state == 1)
+					{
+						if (posX < player.posX && posX < _a[1]) posX += (float)((Player.MSpeed / 3 * 2) * t.ElapsedGameTime.TotalMilliseconds * (1000 / speed));
+						else if (posX >= player.posX && posX > _a[0]) posX -= (float)((Player.MSpeed / 3 * 2) * t.ElapsedGameTime.TotalMilliseconds * (1000 / speed));
+						else state = 0;
+					}
+				}
+				if ((attri & 2) == 0) state = (byte)(_fa((int)(posX - player.posX)) <= TexSi && (posY / TexSi) == (player.posY / TexSi) && (state == 0 || state == 1 || state == 2) ? 2 : (state == 2 ? 0 : state));
 			}
 
 			#region IDisposable Support
@@ -598,7 +613,7 @@ namespace KingsGame
 			public ushort[] blockR(ushort b, ushort y)
 			{
 				var c = new ushort[] { 0, 0 };
-				for (var _a = b; _a >= 0; _a--)
+				for (var _a = (ushort)(b - 1); _a >= 0; _a--)
 				{
 					if (Map.back[_map(_a, y)] < 47)
 					{
@@ -606,7 +621,7 @@ namespace KingsGame
 						break;
 					}
 				}
-				for (var _a = b; _a < width; _a++)
+				for (var _a = (ushort)(b + 1); _a < width; _a++)
 				{
 					if (Map.back[_map(_a, y)] < 47)
 					{
