@@ -45,7 +45,8 @@ namespace KingsGame
 			public static ushort[] Idle = new ushort[] { 117, 118, 119, 120, 121, 122, 123 };
 			public static ushort[] Run = new ushort[] { 109, 110, 111, 112, 113, 114, 115, 116 };
 			public static ushort[] Attack = new ushort[] { 109, 132, 133, 134, 109 };
-			public static ushort[] Dead = new ushort[] { 128, 129, 130, 131 };
+			public static ushort[] Die = new ushort[] { 128, 129, 130, 131 };
+			public static ushort[] Dead = new ushort[] { 131 };
 			public static ushort[] WalkOut = new ushort[] { 144, 145, 146, 147, 148, 149, 150, 151 };
 			public static ushort[] WalkIn = new ushort[] { 136, 137, 138, 139, 140, 141, 142, 143 };
 			public static ushort[] Fall = new ushort[] { 124 };
@@ -57,7 +58,8 @@ namespace KingsGame
 			public static ushort[] PigsIdle = new ushort[] { 156, 156, 156, 156, 156, 156, 157, 158, 159, 160, 161 };
 			public static ushort[] PigsRun = new ushort[] { 162, 163, 164, 165, 166, 167 };
 			public static ushort[] PigsAttack = new ushort[] { 168, 169, 170, 171, 172 };
-			public static ushort[] PigsDead = new ushort[] { 173, 174, 175, 176 };
+			public static ushort[] PigsDie = new ushort[] { 173, 174, 175, 176 };
+			public static ushort[] PigsDead = new ushort[] { 176 };
 			public static ushort[] PigsHit = new ushort[] { 177, 178 };
 			public static ushort[] PigsJump = new ushort[] { 179 };
 			public static ushort[] PigsFall = new ushort[] { 180 };
@@ -285,19 +287,20 @@ namespace KingsGame
 				{
 					Debug = System.Diagnostics.Process.GetProcessById(GetParentProcessID(System.Diagnostics.Process.GetCurrentProcess().Handle)).ProcessName == "devenv";
 				}
-				catch (System.Exception e) {
+				catch (System.Exception e)
+				{
 					Debug = false;
 				}
 			}
 			graphics = new GraphicsDeviceManager(this);
 			Content.RootDirectory = "Content";
-			width = 12;
-			height = 6;
 			player = new Player();
 			content = new IContent("game.idata");
 			Pigs = new Pig[0];
+			width = content.width;
+			height = content.height;
 		}
-		static void writeData(string b, byte[] a, int d = -1)
+		private static void writeData(string b, byte[] a, int d = -1)
 		{
 			d = d < 0 ? a.Length : d;
 			uint c = 0;
@@ -307,7 +310,7 @@ namespace KingsGame
 			f.Write(new byte[] { (byte)c, (byte)(c >> 8), (byte)(c >> 16), (byte)(c >> 24) }, 0, 4);
 			f.Dispose();
 		}
-		static byte[] readData(string a)
+		private static byte[] readData(string a)
 		{
 			var b = File.ReadAllBytes(a);
 			uint c = 0;
@@ -316,7 +319,7 @@ namespace KingsGame
 			if ((uint)(b[b.Length - 1] << 24 | b[b.Length - 2] << 16 | b[b.Length - 3] << 8 | b[b.Length - 4]) != c) throw new System.Exception("File Damaged");
 			return e;
 		}
-		void loadMap(int a)
+		private void loadMap(int a)
 		{
 			currMap = a;
 			Map = content.maps[a];
@@ -381,22 +384,24 @@ namespace KingsGame
 		}
 		class Pig : System.IDisposable
 		{
-			float posX;
-			float posY;
-			byte type;
-			byte attri;
-			byte state;
-			byte _state;
-			double t;
-			bool view;
+			public float posX;
+			public float posY;
+			public byte type;
+			public byte attri;
+			public byte state;
+			private byte _state;
+			private double t;
+			private bool view;
+			public float health;
 			public Pig()
 			{
 				state = 0;
 				_state = 0xff;
 				t = 0;
 				view = true;
+				health = 1f;
 			}
-			public Pig(byte[] a): this()
+			public Pig(byte[] a) : this()
 			{
 				type = a[0];
 				posX = TexSi * a[1];
@@ -405,24 +410,25 @@ namespace KingsGame
 			}
 			public Pig(int a) : this()
 			{
-				type = Map.pigs[a ,0];
-				posX = TexSi * Map.pigs[a ,1];
-				posY = TexSi * Map.pigs[a ,2];
-				attri = Map.pigs[a ,3];
+				type = Map.pigs[a, 0];
+				posX = TexSi * Map.pigs[a, 1];
+				posY = TexSi * Map.pigs[a, 2];
+				attri = Map.pigs[a, 3];
 			}
 			public void draw(GameTime t, SpriteBatch sprite, SpriteFont font)
 			{
 				ushort[] f;
-				switch(state)
+				switch (state)
 				{
-					case 1:		f = Animations.PigsRun;		break;
-					case 2:		f = Animations.PigsAttack;	break;
-					case 3:		f = Animations.PigsDead;	break;
-					case 4:		f = Animations.PigsHit;		break;
-					case 5:		f = Animations.PigsJump;	break;
-					case 6:		f = Animations.PigsFall;	break;
-					case 7:		f = Animations.PigsGround;	break;
-					default:	f = Animations.PigsIdle;	break;
+					case 1: f = Animations.PigsRun; break;
+					case 2: f = Animations.PigsAttack; break;
+					case 3: f = Animations.PigsDie; break;
+					case 4: f = Animations.PigsHit; break;
+					case 5: f = Animations.PigsJump; break;
+					case 6: f = Animations.PigsFall; break;
+					case 7: f = Animations.PigsGround; break;
+					case 8: f = Animations.PigsDead; break;
+					default: f = Animations.PigsIdle; break;
 				}
 				if (_state != state)
 				{
@@ -507,9 +513,11 @@ namespace KingsGame
 			public byte inputBlock = 0;
 			public float blockRev = 0;
 			public const double MSpeed = 0.04;
-			public double start;
-			public bool allowFall = true;
+			private double start;
+			private bool allowFall;
 			public sbyte aniJump = -1;
+			public float health;
+			public int fr, _fr;
 			public Player()
 			{
 				positionX = 3;
@@ -517,6 +525,9 @@ namespace KingsGame
 				posX = positionX * TexSi;
 				posY = positionY * TexSi;
 				view = true;
+				allowFall = true;
+				health = 1;
+				fr = 0;
 			}
 			public void init(byte[] a)
 			{
@@ -676,9 +687,10 @@ namespace KingsGame
 					case 4: frames = Animations.Fall; break;
 					case 5: frames = Animations.Ground; break;
 					case 6: frames = Animations.Hit; break;
-					case 7: frames = Animations.Dead; break;
+					case 7: frames = Animations.Die; break;
 					case 8: frames = Animations.WalkOut; break;
 					case 9: frames = Animations.WalkIn; break;
+					case 10: frames = Animations.Dead; break;
 					default: frames = Animations.Idle; break;
 				}
 				if (_state != state)
@@ -706,7 +718,7 @@ namespace KingsGame
 			for (var _a = 0; _a < Pigs.Length; _a++) Pigs[_a].draw(gameTime, sprite, font);
 			player.draw(gameTime, sprite, font);
 
-			if(Debug) sprite.DrawString(font, logs, new Vector2(10, 10), Color.White);
+			if (Debug) sprite.DrawString(font, logs, new Vector2(10, 10), Color.White);
 			sprite.End();
 			fps[1]++;
 			_fps_f++;
