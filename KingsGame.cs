@@ -441,8 +441,17 @@ namespace KingsGame
 			int _fa(int a) => a < 0 ? a * -1 : a;
 			public void update(GameTime t)
 			{
-				if((attri & 1) == 0) view = (posX - player.posX) > 0;
-				if((attri & 4) == 0)
+				if (health <= 0)
+				{
+					if (state == 3 && _state == 3 && (int)((t.TotalGameTime.TotalMilliseconds - this.t) % speed) == 0) state = 8;
+					else if (state != 3 && state != 8)
+					{
+						state = 3;
+						attri = 0xf;
+					}
+				}
+				if ((attri & 1) == 0) view = (posX - player.posX) > 0;
+				if ((attri & 4) == 0)
 				{
 					var _a = player.blockR((ushort)(posX / TexSi), (ushort)(posY / TexSi));
 					_a[0] = (ushort)(++_a[0] * TexSi);
@@ -455,7 +464,11 @@ namespace KingsGame
 						else state = 0;
 					}
 				}
-				if ((attri & 2) == 0) state = (byte)(_fa((int)(posX - player.posX)) <= TexSi && (posY / TexSi) == (player.posY / TexSi) && (state == 0 || state == 1 || state == 2) ? 2 : (state == 2 ? 0 : state));
+				if ((attri & 2) == 0 && player.health >= 0)
+				{
+					state = (byte)(_fa((int)(posX - player.posX)) <= TexSi && (posY / TexSi) == (player.posY / TexSi) && (state == 0 || state == 1 || state == 2) ? 2 : (state == 2 ? 0 : state));
+					if (state == 2 && (int)((t.TotalGameTime.TotalMilliseconds - this.t) % speed) == 0) player.health -= 0.2f;
+				}
 			}
 
 			#region IDisposable Support
@@ -536,6 +549,23 @@ namespace KingsGame
 			}
 			public void update(GameTime t)
 			{
+				if (state == 7 && _state == 7 && t.TotalGameTime.TotalMilliseconds - start > speed) state = 10;
+				if (health <= 0 && (state != 7 && state != 10))
+				{
+					state = 7;
+					inputBlock = (byte)(inputBlock | 0xf);
+				}
+				if (state == 2 && _state == 2 && _fr != fr && fr == 3)
+				{
+					var _b = posX + (TexSi * (view ? 1 : -1));
+					for (var _a = 0; _a < Pigs.Length; _a++)
+					{
+						if ((Pigs[_a].posY / TexSi) == (posY / TexSi) && Pigs[_a].posX > (_b - TexSi * 0.2) && Pigs[_a].posX <= _b + TexSi)
+						{
+							Pigs[_a].health -= 0.5f;
+						}
+					}
+				}
 				positionX = (ushort)(posX / TexSi);
 				positionY = (ushort)(posY / TexSi);
 				if (state == 5 && blockRev > 0)
@@ -699,11 +729,17 @@ namespace KingsGame
 					_state = state;
 				}
 				var _a = blockR(positionX, positionY);
-				aniDraw(sprite, (ushort)posX, (ushort)posY, t.TotalGameTime.TotalMilliseconds - start, frames, view);
-				sprite.DrawString(font, positionX + ", " + positionY + '\n' + Map.back[_map(positionX, positionY)].ToString() + "\n" + _a[0].ToString() + ", " + _a[1].ToString(), new Vector2(posX * scale, posY * scale), Color.Aqua);
+				_fr = fr;
+				fr = aniDraw(sprite, (ushort)posX, (ushort)posY, t.TotalGameTime.TotalMilliseconds - start, frames, view);
+				if (Debug) sprite.DrawString(font, positionX + ", " + positionY + '\n' + Map.back[_map(positionX, positionY)].ToString() + "\n" + _a[0].ToString() + ", " + _a[1].ToString() + '\n' + health, new Vector2(posX * scale, posY * scale), Color.Aqua);
 			}
 		}
-		static void aniDraw(SpriteBatch s, ushort x, ushort y, double t, ushort[] f, bool h = false) => content._draw(s, x, y, f[(int)((t / (speed / f.Length)) % f.Length)], true, h ? SpriteEffects.None : SpriteEffects.FlipHorizontally);
+		static int aniDraw(SpriteBatch s, ushort x, ushort y, double t, ushort[] f, bool h = false)
+		{
+			var a = (int)((t / (speed / f.Length)) % f.Length);
+			content._draw(s, x, y, f[a], true, h ? SpriteEffects.None : SpriteEffects.FlipHorizontally);
+			return a;
+		}
 		protected override void Draw(GameTime gameTime)
 		{
 			string logs = "FPS: " + (1000 / (int)(gameTime.ElapsedGameTime.TotalMilliseconds < 1 ? 1000 : gameTime.ElapsedGameTime.TotalMilliseconds)).ToString() + ", " + fps[0];
