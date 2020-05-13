@@ -38,6 +38,8 @@ namespace KingsGame
 		static map Map;
 		static Pig[] Pigs;
 
+		static bool Debug = true;
+
 		class Animations
 		{
 			public static ushort[] Idle = new ushort[] { 117, 118, 119, 120, 121, 122, 123 };
@@ -255,8 +257,38 @@ namespace KingsGame
 			public void Dispose() => Dispose(true);
 			#endregion
 		}
+
+		private struct PROCESS_BASIC_INFORMATION
+		{
+			public System.IntPtr Reserved1;
+			public System.IntPtr PebBaseAddress;
+			public System.IntPtr Reserved2_0;
+			public System.IntPtr Reserved2_1;
+			public System.IntPtr UniqueProcessId;
+			public System.IntPtr Reserved3;
+		}
+		private static int GetParentProcessID(System.IntPtr handle)
+		{
+			var pbi = new PROCESS_BASIC_INFORMATION();
+			int returnLength;
+			int status = NtQueryInformationProcess(handle, 0, ref pbi, System.Runtime.InteropServices.Marshal.SizeOf(pbi), out returnLength);
+			if (status != 0) throw new System.ComponentModel.Win32Exception(status);
+			return pbi.Reserved3.ToInt32();
+		}
+		[System.Runtime.InteropServices.DllImport("ntdll.dll")]
+		private static extern int NtQueryInformationProcess(System.IntPtr processHandle, int processInformationClass, ref PROCESS_BASIC_INFORMATION processInformation, int processInformationLength, out int returnLength);
 		public KingsGame()
 		{
+			if (Debug)
+			{
+				try
+				{
+					Debug = System.Diagnostics.Process.GetProcessById(GetParentProcessID(System.Diagnostics.Process.GetCurrentProcess().Handle)).ProcessName == "devenv";
+				}
+				catch (System.Exception e) {
+					Debug = false;
+				}
+			}
 			graphics = new GraphicsDeviceManager(this);
 			Content.RootDirectory = "Content";
 			width = 12;
@@ -398,6 +430,7 @@ namespace KingsGame
 					_state = state;
 				}
 				aniDraw(sprite, (ushort)posX, (ushort)posY, t.TotalGameTime.TotalMilliseconds - this.t, f, view);
+				if (Debug) sprite.DrawString(font, (int)(posX / TexSi) + ", " + (int)(posY / TexSi) + '\n' + health, new Vector2(posX * scale, posY * scale), Color.White);
 			}
 			int _fa(int a) => a < 0 ? a * -1 : a;
 			public void update(GameTime t)
@@ -673,7 +706,7 @@ namespace KingsGame
 			for (var _a = 0; _a < Pigs.Length; _a++) Pigs[_a].draw(gameTime, sprite, font);
 			player.draw(gameTime, sprite, font);
 
-			sprite.DrawString(font, logs, new Vector2(10, 10), Color.White);
+			if(Debug) sprite.DrawString(font, logs, new Vector2(10, 10), Color.White);
 			sprite.End();
 			fps[1]++;
 			_fps_f++;
